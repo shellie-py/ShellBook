@@ -1,51 +1,100 @@
 import React, { useState, useEffect } from 'react';
 import './App.css';
 
+// Импортируем тексты книг
+import shinelText from './books/gogol_shinel.txt';
+import damaText from './books/chekhov_dama.txt';
+import prestuplenieText from './books/dostoevsky_prestuplenie.txt';
+import kavkazskyText from './books/tolstoy_kavkazsky_plennik.txt';
+
 function App() {
   const [currentSection, setCurrentSection] = useState('library');
   const [notes, setNotes] = useState([]);
   const [books, setBooks] = useState([
     {
       id: 1,
-      title: "Евгений Онегин",
-      author: "А. С. Пушкин",
-      year: 1831,
-      description: "Роман в стихах Александра Сергеевича Пушкина, одно из самых значительных произведений русской литературы.",
-      collection: 'read'
+      title: "Шинель",
+      author: "Николай Гоголь",
+      year: 1842,
+      description: "Одна из самых известных повестей Гоголя о мелком чиновнике Акакии Акакиевиче Башмачкине.",
+      collection: 'read',
+      text: shinelText,
+      canRead: true
     },
     {
       id: 2,
       title: "Преступление и наказание",
-      author: "Ф. М. Достоевский",
+      author: "Фёдор Достоевский",
       year: 1866,
-      description: "Социально-психологический и социально-философский роман Фёдора Михайловича Достоевского.",
-      collection: 'favorites'
+      description: "Социально-психологический роман о бывшем студенте Родионе Раскольникове.",
+      collection: 'favorites',
+      text: prestuplenieText,
+      canRead: true
     },
     {
       id: 3,
-      title: "Война и мир",
-      author: "Л. Н. Толстой",
-      year: 1869,
-      description: "Роман-эпопея Льва Николаевича Толстого, описывающий русское общество в эпоху войн против Наполеона.",
-      collection: 'planned'
+      title: "Дама с собачкой",
+      author: "Антон Чехов",
+      year: 1899,
+      description: "Рассказ о любовной связи между мужчиной и женщиной, которые оба состоят в браке.",
+      collection: 'planned',
+      text: damaText,
+      canRead: true
     },
     {
       id: 4,
-      title: "Мёртвые души",
-      author: "Н. В. Гоголь",
-      year: 1842,
-      description: "Поэма Николая Васильевича Гоголя, жанр которой сам автор обозначил как поэма.",
+      title: "Кавказский пленник",
+      author: "Лев Толстой",
+      year: 1872,
+      description: "Рассказ о русском офицере Жилине, попавшем в плен к горцам во время Кавказской войны.",
+      text: kavkazskyText,
+      canRead: true,
       collection: null
     },
     {
       id: 5,
-      title: "Отцы и дети",
-      author: "И. С. Тургенев",
-      year: 1862,
-      description: "Роман Ивана Сергеевича Тургенева, знаменитый социально-психологический конфликт.",
-      collection: null
+      title: "Портрет Дориана Грея",
+      author: "Оскар Уайльд",
+      year: 1890,
+      description: "Роман о красивом молодом человеке, который желает, чтобы его портрет старел вместо него.",
+      collection: null,
+      canRead: false,
+      externalLink: "https://www.culture.ru/read/portret-doriana-greya"
+    },
+    {
+      id: 6,
+      title: "1984",
+      author: "Джордж Оруэлл",
+      year: 1949,
+      description: "Антиутопический роман о тоталитарном обществе под постоянным контролем Большого Брата.",
+      collection: 'planned',
+      canRead: false,
+      externalLink: "https://www.litres.ru/book/dzhordzh-oruell/1984-535330/"
+    },
+    {
+      id: 7,
+      title: "Заводной апельсин",
+      author: "Энтони Бёрджесс",
+      year: 1962,
+      description: "Роман о подростке-преступнике в антиутопическом будущем Великобритании.",
+      collection: null,
+      canRead: false,
+      externalLink: "https://www.litres.ru/book/entoni-berdzhess/mehanicheskiy-apelsin-114199/"
+    },
+    {
+      id: 8,
+      title: "Мёртвые души",
+      author: "Николай Гоголь",
+      year: 1842,
+      description: "Поэма о афере Чичикова, скупающего «мёртвые души» у помещиков.",
+      collection: null,
+      canRead: false,
+      externalLink: "https://ilibrary.ru/text/1090/index.html"
     }
   ]);
+
+  const [selectedBook, setSelectedBook] = useState(null);
+  const [bookText, setBookText] = useState('');
 
   // Загружаем данные из localStorage
   useEffect(() => {
@@ -69,12 +118,23 @@ function App() {
     localStorage.setItem('shellbook-books', JSON.stringify(books));
   }, [books]);
 
+  // Загружаем текст книги при выборе
+  useEffect(() => {
+    if (selectedBook && selectedBook.canRead && selectedBook.text) {
+      fetch(selectedBook.text)
+        .then(response => response.text())
+        .then(text => setBookText(text))
+        .catch(error => console.error('Ошибка загрузки книги:', error));
+    }
+  }, [selectedBook]);
+
   // Функция для добавления новой заметки
   const addNote = (newNote) => {
     const noteWithId = {
       ...newNote,
       id: Date.now(),
-      createdAt: new Date().toISOString()
+      createdAt: new Date().toISOString(),
+      lastEdited: new Date().toISOString()
     };
     setNotes([...notes, noteWithId]);
   };
@@ -96,6 +156,11 @@ function App() {
     setBooks(books.map(book => 
       book.id === bookId ? { ...book, collection: null } : book
     ));
+  };
+
+  // Функция для чтения книги
+  const handleReadBook = (book) => {
+    setSelectedBook(book);
   };
 
   return (
@@ -126,36 +191,134 @@ function App() {
       </nav>
 
       <main className="main-content">
-        {currentSection === 'library' && (
-          <LibrarySection 
-            books={books} 
-            onAddNote={addNote} 
-            onAddToCollection={addToCollection}
-            onRemoveFromCollection={removeFromCollection}
+        {selectedBook ? (
+          <BookReader 
+            book={selectedBook} 
+            bookText={bookText}
+            onBack={() => setSelectedBook(null)}
+            onAddNote={addNote}
           />
-        )}
-        {currentSection === 'notes' && (
-          <NotesSection 
-            notes={notes} 
-            onDeleteNote={deleteNote} 
-            books={books} 
-          />
-        )}
-        {currentSection === 'collections' && (
-          <CollectionsSection 
-            books={books}
-            onAddToCollection={addToCollection}
-            onRemoveFromCollection={removeFromCollection}
-          />
+        ) : (
+          <>
+            {currentSection === 'library' && (
+              <LibrarySection 
+                books={books} 
+                onAddNote={addNote} 
+                onAddToCollection={addToCollection}
+                onRemoveFromCollection={removeFromCollection}
+                onReadBook={handleReadBook}
+              />
+            )}
+            {currentSection === 'notes' && (
+              <NotesSection 
+                notes={notes} 
+                onDeleteNote={deleteNote} 
+                books={books} 
+              />
+            )}
+            {currentSection === 'collections' && (
+              <CollectionsSection 
+                books={books}
+                onAddToCollection={addToCollection}
+                onRemoveFromCollection={removeFromCollection}
+                onReadBook={handleReadBook}
+              />
+            )}
+          </>
         )}
       </main>
     </div>
   );
 }
 
-// Обновленный компонент библиотеки с кнопками коллекций
-function LibrarySection({ books, onAddNote, onAddToCollection, onRemoveFromCollection }) {
-  const [selectedBook, setSelectedBook] = useState(null);
+// Компонент чтения книги
+function BookReader({ book, bookText, onBack, onAddNote }) {
+  const [noteText, setNoteText] = useState('');
+  const [showNoteForm, setShowNoteForm] = useState(false);
+
+  const handleAddNote = () => {
+    if (noteText.trim()) {
+      onAddNote({
+        bookId: book.id,
+        bookTitle: book.title,
+        text: noteText,
+        page: 'начало',
+        quote: bookText.substring(0, 100) + '...'
+      });
+      setNoteText('');
+      setShowNoteForm(false);
+      alert('Заметка добавлена!');
+    }
+  };
+
+  if (!book.canRead) {
+    return (
+      <div>
+        <button onClick={onBack} className="back-button">← Назад к библиотеке</button>
+        <div className="book-info">
+          <h2>{book.title}</h2>
+          <div className="book-author">{book.author}, {book.year}</div>
+          <p className="book-description">{book.description}</p>
+          <div className="external-link-info">
+            <p>📚 Эта книга защищена авторским правом, но вы можете прочитать её легально:</p>
+            <a href={book.externalLink} target="_blank" rel="noopener noreferrer" className="external-link">
+              Читать на внешнем ресурсе →
+            </a>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <div className="book-reader">
+      <div className="reader-header">
+        <button onClick={onBack} className="back-button">← Назад к библиотеке</button>
+        <div className="reader-book-info">
+          <h2>{book.title}</h2>
+          <div className="book-author">{book.author}, {book.year}</div>
+        </div>
+        <button 
+          onClick={() => setShowNoteForm(!showNoteForm)}
+          className="add-note-btn"
+        >
+          {showNoteForm ? 'Отменить' : 'Добавить заметку'}
+        </button>
+      </div>
+
+      {showNoteForm && (
+        <div className="note-form">
+          <textarea
+            value={noteText}
+            onChange={(e) => setNoteText(e.target.value)}
+            placeholder="Запишите ваши мысли о прочитанном..."
+            className="note-textarea"
+            rows="4"
+          />
+          <button 
+            onClick={handleAddNote}
+            className="save-note-btn"
+            disabled={!noteText.trim()}
+          >
+            Сохранить заметку
+          </button>
+        </div>
+      )}
+
+      <div className="book-text">
+        {bookText ? (
+          <pre>{bookText}</pre>
+        ) : (
+          <div className="loading">Загрузка книги...</div>
+        )}
+      </div>
+    </div>
+  );
+}
+
+// Компонент библиотеки
+function LibrarySection({ books, onAddNote, onAddToCollection, onRemoveFromCollection, onReadBook }) {
+  const [selectedBookForNote, setSelectedBookForNote] = useState(null);
   const [noteText, setNoteText] = useState('');
 
   const handleAddNote = (book) => {
@@ -168,7 +331,7 @@ function LibrarySection({ books, onAddNote, onAddToCollection, onRemoveFromColle
         quote: ''
       });
       setNoteText('');
-      setSelectedBook(null);
+      setSelectedBookForNote(null);
       alert('Заметка добавлена!');
     }
   };
@@ -182,16 +345,16 @@ function LibrarySection({ books, onAddNote, onAddToCollection, onRemoveFromColle
     }
   };
 
-  if (selectedBook) {
+  if (selectedBookForNote) {
     return (
       <div>
-        <button onClick={() => setSelectedBook(null)} className="back-button">
+        <button onClick={() => setSelectedBookForNote(null)} className="back-button">
           ← Назад к библиотеке
         </button>
-        <h2>Добавить заметку для "{selectedBook.title}"</h2>
+        <h2>Добавить заметку для "{selectedBookForNote.title}"</h2>
         <div className="book-card">
-          <div className="book-title">{selectedBook.title}</div>
-          <div className="book-author">{selectedBook.author}, {selectedBook.year}</div>
+          <div className="book-title">{selectedBookForNote.title}</div>
+          <div className="book-author">{selectedBookForNote.author}, {selectedBookForNote.year}</div>
         </div>
         <textarea
           value={noteText}
@@ -201,7 +364,7 @@ function LibrarySection({ books, onAddNote, onAddToCollection, onRemoveFromColle
           rows="6"
         />
         <button 
-          onClick={() => handleAddNote(selectedBook)}
+          onClick={() => handleAddNote(selectedBookForNote)}
           className="save-note-btn"
           disabled={!noteText.trim()}
         >
@@ -224,15 +387,33 @@ function LibrarySection({ books, onAddNote, onAddToCollection, onRemoveFromColle
             <div className="book-author">{book.author}, {book.year}</div>
             <div className="book-description">{book.description}</div>
             
-            <div className="collection-buttons" style={{marginTop: '15px', display: 'flex', flexDirection: 'column', gap: '8px'}}>
+            <div className="book-actions" style={{marginTop: '15px', display: 'flex', flexDirection: 'column', gap: '8px'}}>
+              {book.canRead ? (
+                <button 
+                  className="read-book-btn"
+                  onClick={() => onReadBook(book)}
+                >
+                  📖 Читать
+                </button>
+              ) : (
+                <a 
+                  href={book.externalLink} 
+                  target="_blank" 
+                  rel="noopener noreferrer"
+                  className="external-link-btn"
+                >
+                  🔗 Читать онлайн
+                </a>
+              )}
+              
               <button 
                 className="add-note-btn"
-                onClick={() => setSelectedBook(book)}
+                onClick={() => setSelectedBookForNote(book)}
               >
-                Добавить заметку
+                ✏️ Добавить заметку
               </button>
               
-              <div style={{display: 'flex', gap: '5px', flexWrap: 'wrap'}}>
+              <div style={{display: 'flex', gap: '5px', flexWrap: 'wrap', justifyContent: 'center'}}>
                 <button 
                   onClick={() => onAddToCollection(book.id, 'favorites')}
                   style={{
@@ -300,7 +481,7 @@ function LibrarySection({ books, onAddNote, onAddToCollection, onRemoveFromColle
   );
 }
 
-// Компонент заметок
+// Компонент заметок с улучшенным отображением дат
 function NotesSection({ notes, onDeleteNote, books }) {
   const [filterBook, setFilterBook] = useState('all');
 
@@ -310,13 +491,41 @@ function NotesSection({ notes, onDeleteNote, books }) {
 
   const formatDate = (dateString) => {
     const date = new Date(dateString);
-    return date.toLocaleString('ru-RU', {
-      day: '2-digit',
-      month: '2-digit',
-      year: 'numeric',
-      hour: '2-digit',
-      minute: '2-digit'
-    });
+    const now = new Date();
+    const diffTime = Math.abs(now - date);
+    const diffDays = Math.floor(diffTime / (1000 * 60 * 60 * 24));
+    
+    if (diffDays === 0) {
+      return `Сегодня в ${date.toLocaleTimeString('ru-RU', { hour: '2-digit', minute: '2-digit' })}`;
+    } else if (diffDays === 1) {
+      return `Вчера в ${date.toLocaleTimeString('ru-RU', { hour: '2-digit', minute: '2-digit' })}`;
+    } else if (diffDays < 7) {
+      return `${diffDays} дней назад`;
+    } else {
+      return date.toLocaleDateString('ru-RU', {
+        day: '2-digit',
+        month: '2-digit',
+        year: 'numeric',
+        hour: '2-digit',
+        minute: '2-digit'
+      });
+    }
+  };
+
+  const getTimeAgo = (dateString) => {
+    const date = new Date(dateString);
+    const now = new Date();
+    const diffMs = now - date;
+    const diffMins = Math.floor(diffMs / (1000 * 60));
+    const diffHours = Math.floor(diffMs / (1000 * 60 * 60));
+    const diffDays = Math.floor(diffMs / (1000 * 60 * 60 * 24));
+
+    if (diffMins < 1) return 'только что';
+    if (diffMins < 60) return `${diffMins} мин. назад`;
+    if (diffHours < 24) return `${diffHours} ч. назад`;
+    if (diffDays === 1) return 'вчера';
+    if (diffDays < 7) return `${diffDays} дн. назад`;
+    return formatDate(dateString);
   };
 
   return (
@@ -331,6 +540,9 @@ function NotesSection({ notes, onDeleteNote, books }) {
             <option key={book.id} value={book.id}>{book.title}</option>
           ))}
         </select>
+        <div style={{marginLeft: 'auto', color: '#7a6ba8', fontSize: '0.9rem'}}>
+          Всего заметок: <strong>{filteredNotes.length}</strong>
+        </div>
       </div>
 
       <div className="notes-list">
@@ -343,9 +555,17 @@ function NotesSection({ notes, onDeleteNote, books }) {
             <div key={note.id} className="note-card">
               <div className="note-header">
                 <div className="note-book-title">{note.bookTitle}</div>
-                <div className="note-date">{formatDate(note.createdAt)}</div>
+                <div className="note-date-info">
+                  <div className="note-date">{formatDate(note.createdAt)}</div>
+                  <div className="note-time-ago">{getTimeAgo(note.createdAt)}</div>
+                </div>
               </div>
               <div className="note-text">{note.text}</div>
+              {note.quote && (
+                <div className="note-quote">
+                  <strong>Цитата:</strong> {note.quote}
+                </div>
+              )}
               <button 
                 onClick={() => onDeleteNote(note.id)}
                 className="delete-note-btn"
@@ -353,15 +573,15 @@ function NotesSection({ notes, onDeleteNote, books }) {
                 Удалить
               </button>
             </div>
-          ))
+          )).reverse() // Новые заметки сверху
         )}
       </div>
     </div>
   );
 }
 
-// Обновленный компонент коллекций
-function CollectionsSection({ books, onAddToCollection, onRemoveFromCollection }) {
+// Компонент коллекций
+function CollectionsSection({ books, onAddToCollection, onRemoveFromCollection, onReadBook }) {
   const favorites = books.filter(book => book.collection === 'favorites');
   const planned = books.filter(book => book.collection === 'planned');
   const read = books.filter(book => book.collection === 'read');
@@ -376,17 +596,38 @@ function CollectionsSection({ books, onAddToCollection, onRemoveFromCollection }
     </div>
   );
 
-  const BookInCollection = ({ book, onRemove }) => (
+  const BookInCollection = ({ book, onRemove, onRead }) => (
     <div className="book-card" style={{marginBottom: '10px'}}>
       <div className="book-title">{book.title}</div>
       <div className="book-author">{book.author}, {book.year}</div>
-      <button 
-        onClick={() => onRemove(book.id)}
-        className="delete-note-btn"
-        style={{marginTop: '10px', fontSize: '0.8rem'}}
-      >
-        Удалить из коллекции
-      </button>
+      <div className="book-actions" style={{marginTop: '10px', display: 'flex', gap: '8px', flexWrap: 'wrap'}}>
+        {book.canRead ? (
+          <button 
+            onClick={() => onRead(book)}
+            className="read-book-btn"
+            style={{fontSize: '0.8rem', padding: '5px 10px'}}
+          >
+            📖 Читать
+          </button>
+        ) : (
+          <a 
+            href={book.externalLink} 
+            target="_blank" 
+            rel="noopener noreferrer"
+            className="external-link-btn"
+            style={{fontSize: '0.8rem', padding: '5px 10px'}}
+          >
+            🔗 Читать
+          </a>
+        )}
+        <button 
+          onClick={() => onRemove(book.id)}
+          className="delete-note-btn"
+          style={{fontSize: '0.8rem', padding: '5px 10px'}}
+        >
+          Удалить
+        </button>
+      </div>
     </div>
   );
 
@@ -432,6 +673,7 @@ function CollectionsSection({ books, onAddToCollection, onRemoveFromCollection }
                   key={book.id} 
                   book={book} 
                   onRemove={onRemoveFromCollection}
+                  onRead={onReadBook}
                 />
               ))
             )}
@@ -447,6 +689,7 @@ function CollectionsSection({ books, onAddToCollection, onRemoveFromCollection }
                   key={book.id} 
                   book={book} 
                   onRemove={onRemoveFromCollection}
+                  onRead={onReadBook}
                 />
               ))
             )}
@@ -462,6 +705,7 @@ function CollectionsSection({ books, onAddToCollection, onRemoveFromCollection }
                   key={book.id} 
                   book={book} 
                   onRemove={onRemoveFromCollection}
+                  onRead={onReadBook}
                 />
               ))
             )}
