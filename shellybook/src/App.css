@@ -382,3 +382,220 @@ body {
     text-align: left;
   }
 }
+
+/* Новые стили для читалки с закладками и выделением */
+
+.app-subtitle {
+  color: #9e9bb6;
+  font-size: 1.1rem;
+  font-weight: 300;
+  margin-top: 5px;
+}
+
+.reader-actions {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.add-bookmark-btn {
+  padding: 10px 15px;
+  background: linear-gradient(135deg, #ffd6a8 0%, #ffb37b 100%);
+  color: white;
+  border: none;
+  border-radius: 20px;
+  cursor: pointer;
+  font-size: 0.9rem;
+  transition: all 0.3s ease;
+}
+
+.add-bookmark-btn:disabled {
+  background: #d1d1e0;
+  cursor: not-allowed;
+}
+
+.add-bookmark-btn:hover:not(:disabled) {
+  background: linear-gradient(135deg, #ffb37b 0%, #ff9a5a 100%);
+  transform: translateY(-2px);
+}
+
+/* Панель выделенного текста */
+.selection-panel {
+  background: linear-gradient(135deg, #e8f4ff 0%, #d4eaff 100%);
+  border: 1px solid #a8c0d6;
+  border-radius: 10px;
+  padding: 15px;
+  margin-bottom: 15px;
+}
+
+.selected-text {
+  color: #5a9bc0;
+  font-size: 0.9rem;
+}
+
+.selected-text em {
+  background: #fff9e6;
+  padding: 2px 5px;
+  border-radius: 3px;
+  font-style: normal;
+}
+
+/* Форма закладки */
+.bookmark-form {
+  background: linear-gradient(135deg, #fff9e6 0%, #ffeab3 100%);
+  padding: 20px;
+  border-radius: 15px;
+  margin-bottom: 20px;
+  border: 1px solid #ffd166;
+}
+
+.bookmark-input {
+  width: 100%;
+  padding: 12px 15px;
+  border: 1px solid #ffd166;
+  border-radius: 10px;
+  font-size: 1rem;
+  margin: 10px 0;
+  background: white;
+}
+
+.save-bookmark-btn {
+  padding: 12px 25px;
+  background: linear-gradient(135deg, #ffd166 0%, #ffb347 100%);
+  color: white;
+  border: none;
+  border-radius: 25px;
+  cursor: pointer;
+  font-size: 1rem;
+  transition: all 0.3s ease;
+}
+
+.save-bookmark-btn:disabled {
+  background: #d1d1e0;
+  cursor: not-allowed;
+}
+
+.save-bookmark-btn:hover:not(:disabled) {
+  background: linear-gradient(135deg, #ffb347 0%, #ff9a2d 100%);
+  transform: translateY(-2px);
+}
+
+/* Маркеры закладок в тексте */
+.bookmark-marker {
+  margin: 20px 0;
+  border: 2px solid #ffd166;
+  border-radius: 10px;
+  background: #fff9e6;
+}
+
+.bookmark-indicator {
+  background: linear-gradient(135deg, #ffd166 0%, #ffb347 100%);
+  color: white;
+  padding: 8px 15px;
+  border-radius: 8px 8px 0 0;
+  cursor: pointer;
+  font-weight: 500;
+  transition: all 0.3s ease;
+}
+
+.bookmark-indicator:hover {
+  background: linear-gradient(135deg, #ffb347 0%, #ff9a2d 100%);
+}
+
+.bookmark-text-preview {
+  padding: 12px 15px;
+  background: white;
+  border-radius: 0 0 8px 8px;
+  position: relative;
+  font-style: italic;
+  color: #7a7a8c;
+}
+
+.delete-bookmark-btn {
+  position: absolute;
+  top: 5px;
+  right: 10px;
+  background: #e74c3c;
+  color: white;
+  border: none;
+  border-radius: 50%;
+  width: 20px;
+  height: 20px;
+  cursor: pointer;
+  font-size: 0.8rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.delete-bookmark-btn:hover {
+  background: #c0392b;
+}
+
+/* Боковая панель закладок */
+.bookmarks-sidebar {
+  background: linear-gradient(135deg, #f8f7fc 0%, #e8e6f2 100%);
+  border: 1px solid #e8e6f2;
+  border-radius: 15px;
+  padding: 20px;
+  margin-bottom: 20px;
+  max-height: 300px;
+  overflow-y: auto;
+}
+
+.bookmarks-sidebar h4 {
+  color: #7a6ba8;
+  margin-bottom: 15px;
+  border-bottom: 2px solid #e8e6f2;
+  padding-bottom: 8px;
+}
+
+.bookmark-item {
+  background: white;
+  border: 1px solid #e8e6f2;
+  border-radius: 8px;
+  padding: 12px;
+  margin-bottom: 10px;
+  position: relative;
+  transition: all 0.3s ease;
+}
+
+.bookmark-item:hover {
+  transform: translateX(5px);
+  box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+}
+
+.bookmark-name {
+  font-weight: 600;
+  color: #7a6ba8;
+  cursor: pointer;
+  margin-bottom: 5px;
+}
+
+.bookmark-name:hover {
+  color: #5a4a88;
+}
+
+.bookmark-preview {
+  font-size: 0.8rem;
+  color: #9e9bb6;
+  font-style: italic;
+}
+
+.selected-quote {
+  background: rgba(168, 216, 185, 0.1);
+  border-left: 3px solid #7bc1a3;
+  padding: 10px 15px;
+  margin: 10px 0;
+  border-radius: 0 8px 8px 0;
+  font-size: 0.9rem;
+}
+
+/* Подсветка текста при выделении */
+.book-text span::selection {
+  background: #b4e4ff;
+}
+
+.book-text span::-moz-selection {
+  background: #b4e4ff;
+}

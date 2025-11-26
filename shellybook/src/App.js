@@ -10,6 +10,7 @@ import kavkazskyText from './books/tolstoy_kavkazsky_plennik.txt';
 function App() {
   const [currentSection, setCurrentSection] = useState('library');
   const [notes, setNotes] = useState([]);
+  const [bookmarks, setBookmarks] = useState([]);
   const [books, setBooks] = useState([
     {
       id: 1,
@@ -59,8 +60,7 @@ function App() {
       description: "Роман о красивом молодом человеке, который желает, чтобы его портрет старел вместо него.",
       collection: null,
       canRead: false,
-      externalLink: "https://www.100bestbooks.ru/files/Wild_Portret_Doriana_Greya.pdf"
-    },
+      externalLink: "https://www.100bestbooks.ru/files/Wild_Portret_Doriana_Greya.pdf"    },
     {
       id: 6,
       title: "1984",
@@ -69,8 +69,7 @@ function App() {
       description: "Антиутопический роман о тоталитарном обществе под постоянным контролем Большого Брата.",
       collection: 'planned',
       canRead: false,
-      externalLink: "https://boomdown.org/sites/default/files/1984_1948.pdf"
-    },
+      externalLink: "https://boomdown.org/sites/default/files/1984_1948.pdf"    },
     {
       id: 7,
       title: "Заводной апельсин",
@@ -79,8 +78,7 @@ function App() {
       description: "Роман о подростке-преступнике в антиутопическом будущем Великобритании.",
       collection: null,
       canRead: false,
-      externalLink: "https://lib.ru/INPROZ/BERDZHES/apelsin.txt_with-big-pictures.html"
-    },
+      externalLink: "https://lib.ru/INPROZ/BERDZHES/apelsin.txt_with-big-pictures.html"    },
     {
       id: 8,
       title: "Мёртвые души",
@@ -100,12 +98,16 @@ function App() {
   useEffect(() => {
     const savedNotes = localStorage.getItem('shellbook-notes');
     const savedBooks = localStorage.getItem('shellbook-books');
+    const savedBookmarks = localStorage.getItem('shellbook-bookmarks');
     
     if (savedNotes) {
       setNotes(JSON.parse(savedNotes));
     }
     if (savedBooks) {
       setBooks(JSON.parse(savedBooks));
+    }
+    if (savedBookmarks) {
+      setBookmarks(JSON.parse(savedBookmarks));
     }
   }, []);
 
@@ -117,6 +119,10 @@ function App() {
   useEffect(() => {
     localStorage.setItem('shellbook-books', JSON.stringify(books));
   }, [books]);
+
+  useEffect(() => {
+    localStorage.setItem('shellbook-bookmarks', JSON.stringify(bookmarks));
+  }, [bookmarks]);
 
   // Загружаем текст книги при выборе
   useEffect(() => {
@@ -163,10 +169,38 @@ function App() {
     setSelectedBook(book);
   };
 
+  // Функция для добавления закладки
+  const addBookmark = (bookmark) => {
+    const bookmarkWithId = {
+      ...bookmark,
+      id: Date.now(),
+      createdAt: new Date().toISOString()
+    };
+    setBookmarks([...bookmarks, bookmarkWithId]);
+  };
+
+  // Функция для удаления закладки
+  const deleteBookmark = (bookmarkId) => {
+    setBookmarks(bookmarks.filter(bookmark => bookmark.id !== bookmarkId));
+  };
+
+  // Функция для перехода к закладке
+  const goToBookmark = (position) => {
+    const element = document.getElementById(`text-${position}`);
+    if (element) {
+      element.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      element.style.backgroundColor = '#fff9e6';
+      setTimeout(() => {
+        element.style.backgroundColor = 'transparent';
+      }, 2000);
+    }
+  };
+
   return (
     <div className="app">
       <header className="app-header">
-        <h1>Shell Book</h1>
+        <h1>ShellBook</h1>
+        <p className="app-subtitle">Ваш цифровой читательский дневник</p>
       </header>
       
       <nav className="navigation">
@@ -197,6 +231,10 @@ function App() {
             bookText={bookText}
             onBack={() => setSelectedBook(null)}
             onAddNote={addNote}
+            onAddBookmark={addBookmark}
+            bookmarks={bookmarks.filter(b => b.bookId === selectedBook.id)}
+            onDeleteBookmark={deleteBookmark}
+            onGoToBookmark={goToBookmark}
           />
         ) : (
           <>
@@ -231,24 +269,138 @@ function App() {
   );
 }
 
-// Компонент чтения книги
-function BookReader({ book, bookText, onBack, onAddNote }) {
+// Компонент чтения книги с выделением цитат и закладками
+function BookReader({ book, bookText, onBack, onAddNote, onAddBookmark, bookmarks, onDeleteBookmark, onGoToBookmark }) {
   const [noteText, setNoteText] = useState('');
   const [showNoteForm, setShowNoteForm] = useState(false);
+  const [selectedText, setSelectedText] = useState('');
+  const [selectionPosition, setSelectionPosition] = useState(0);
+  const [showBookmarkForm, setShowBookmarkForm] = useState(false);
+  const [bookmarkName, setBookmarkName] = useState('');
 
-  const handleAddNote = () => {
+  // Обработчик выделения текста
+  const handleTextSelection = () => {
+    const selection = window.getSelection();
+    const selectedText = selection.toString().trim();
+    
+    if (selectedText.length > 0) {
+      setSelectedText(selectedText);
+      // Сохраняем позицию выделения для закладки
+      const range = selection.getRangeAt(0);
+      const preSelectionRange = range.cloneRange();
+      preSelectionRange.selectNodeContents(range.startContainer);
+      preSelectionRange.setEnd(range.startContainer, range.startOffset);
+      const position = preSelectionRange.toString().length;
+      setSelectionPosition(position);
+    } else {
+      setSelectedText('');
+    }
+  };
+
+  // Добавление заметки с выделенной цитатой
+  const handleAddNoteWithQuote = () => {
     if (noteText.trim()) {
       onAddNote({
         bookId: book.id,
         bookTitle: book.title,
         text: noteText,
-        page: 'начало',
-        quote: bookText.substring(0, 100) + '...'
+        quote: selectedText,
+        position: selectionPosition
       });
       setNoteText('');
+      setSelectedText('');
       setShowNoteForm(false);
-      alert('Заметка добавлена!');
+      alert('Заметка с цитатой добавлена!');
     }
+  };
+
+  // Добавление закладки
+  const handleAddBookmark = () => {
+    if (bookmarkName.trim()) {
+      onAddBookmark({
+        bookId: book.id,
+        bookTitle: book.title,
+        name: bookmarkName,
+        position: selectionPosition,
+        textPreview: selectedText.substring(0, 100) + '...'
+      });
+      setBookmarkName('');
+      setSelectedText('');
+      setShowBookmarkForm(false);
+      alert('Закладка добавлена!');
+    }
+  };
+
+  // Разбиваем текст на части для отображения с закладками
+  const renderBookText = () => {
+    if (!bookText) return <div className="loading">Загрузка книги...</div>;
+
+    const textParts = [];
+    let lastPosition = 0;
+
+    // Сортируем закладки по позиции
+    const sortedBookmarks = [...bookmarks].sort((a, b) => a.position - b.position);
+
+    sortedBookmarks.forEach(bookmark => {
+      // Текст до закладки
+      if (bookmark.position > lastPosition) {
+        textParts.push({
+          text: bookText.substring(lastPosition, bookmark.position),
+          type: 'text',
+          position: lastPosition
+        });
+      }
+
+      // Закладка
+      textParts.push({
+        text: bookmark.textPreview,
+        type: 'bookmark',
+        bookmark: bookmark,
+        position: bookmark.position
+      });
+
+      lastPosition = bookmark.position;
+    });
+
+    // Оставшийся текст после последней закладки
+    if (lastPosition < bookText.length) {
+      textParts.push({
+        text: bookText.substring(lastPosition),
+        type: 'text',
+        position: lastPosition
+      });
+    }
+
+    return textParts.map((part, index) => {
+      if (part.type === 'bookmark') {
+        return (
+          <div key={`bookmark-${part.bookmark.id}`} className="bookmark-marker">
+            <div className="bookmark-indicator" onClick={() => onGoToBookmark(part.position)}>
+              🔖 {part.bookmark.name}
+            </div>
+            <div className="bookmark-text-preview">
+              {part.text}
+              <button 
+                onClick={() => onDeleteBookmark(part.bookmark.id)}
+                className="delete-bookmark-btn"
+              >
+                ×
+              </button>
+            </div>
+          </div>
+        );
+      } else {
+        return (
+          <span 
+            key={`text-${part.position}`}
+            id={`text-${part.position}`}
+            onMouseUp={handleTextSelection}
+          >
+            {part.text}
+          </span>
+        );
+      }
+    });
   };
 
   if (!book.canRead) {
@@ -278,16 +430,42 @@ function BookReader({ book, bookText, onBack, onAddNote }) {
           <h2>{book.title}</h2>
           <div className="book-author">{book.author}, {book.year}</div>
         </div>
-        <button 
-          onClick={() => setShowNoteForm(!showNoteForm)}
-          className="add-note-btn"
-        >
-          {showNoteForm ? 'Отменить' : 'Добавить заметку'}
-        </button>
+        <div className="reader-actions">
+          <button 
+            onClick={() => setShowNoteForm(!showNoteForm)}
+            className="add-note-btn"
+          >
+            {showNoteForm ? 'Отменить' : '✏️ Заметка'}
+          </button>
+          <button 
+            onClick={() => setShowBookmarkForm(!showBookmarkForm)}
+            className="add-bookmark-btn"
+            disabled={!selectedText}
+          >
+            🔖 Закладка
+          </button>
+        </div>
       </div>
 
+      {/* Панель выделенного текста */}
+      {selectedText && (
+        <div className="selection-panel">
+          <div className="selected-text">
+            <strong>Выделенный текст:</strong> 
+            <em>"{selectedText.substring(0, 100)}{selectedText.length > 100 ? '...' : ''}"</em>
+          </div>
+        </div>
+      )}
+
+      {/* Форма добавления заметки */}
       {showNoteForm && (
         <div className="note-form">
+          <h4>Добавить заметку с цитатой</h4>
+          {selectedText && (
+            <div className="selected-quote">
+              <strong>Цитата:</strong> "{selectedText}"
+            </div>
+          )}
           <textarea
             value={noteText}
             onChange={(e) => setNoteText(e.target.value)}
@@ -296,7 +474,7 @@ function BookReader({ book, bookText, onBack, onAddNote }) {
             rows="4"
           />
           <button 
-            onClick={handleAddNote}
+            onClick={handleAddNoteWithQuote}
             className="save-note-btn"
             disabled={!noteText.trim()}
           >
@@ -305,16 +483,66 @@ function BookReader({ book, bookText, onBack, onAddNote }) {
         </div>
       )}
 
+      {/* Форма добавления закладки */}
+      {showBookmarkForm && (
+        <div className="bookmark-form">
+          <h4>Добавить закладку</h4>
+          {selectedText && (
+            <div className="selected-quote">
+              <strong>Текст рядом:</strong> "{selectedText.substring(0, 100)}..."
+            </div>
+          )}
+          <input
+            type="text"
+            value={bookmarkName}
+            onChange={(e) => setBookmarkName(e.target.value)}
+            placeholder="Название закладки (например: Интересный момент)"
+            className="bookmark-input"
+          />
+          <button 
+            onClick={handleAddBookmark}
+            className="save-bookmark-btn"
+            disabled={!bookmarkName.trim()}
+          >
+            Сохранить закладку
+          </button>
+        </div>
+      )}
+
+      {/* Список закладок */}
+      {bookmarks.length > 0 && (
+        <div className="bookmarks-sidebar">
+          <h4>📑 Закладки ({bookmarks.length})</h4>
+          {bookmarks.map(bookmark => (
+            <div key={bookmark.id} className="bookmark-item">
+              <div 
+                className="bookmark-name"
+                onClick={() => onGoToBookmark(bookmark.position)}
+              >
+                {bookmark.name}
+              </div>
+              <div className="bookmark-preview">{bookmark.textPreview}</div>
+              <button 
+                onClick={() => onDeleteBookmark(bookmark.id)}
+                className="delete-bookmark-btn"
+              >
+                ×
+              </button>
+            </div>
+          ))}
+        </div>
+      )}
+
+      {/* Текст книги */}
       <div className="book-text">
-        {bookText ? (
-          <pre>{bookText}</pre>
-        ) : (
-          <div className="loading">Загрузка книги...</div>
-        )}
+        {renderBookText()}
       </div>
     </div>
   );
 }
+
+// Остальные компоненты (LibrarySection, NotesSection, CollectionsSection) остаются без изменений
+// ... [вставьте сюда компоненты LibrarySection, NotesSection, CollectionsSection из предыдущей версии] ...
 
 // Компонент библиотеки
 function LibrarySection({ books, onAddNote, onAddToCollection, onRemoveFromCollection, onReadBook }) {
@@ -563,7 +791,7 @@ function NotesSection({ notes, onDeleteNote, books }) {
               <div className="note-text">{note.text}</div>
               {note.quote && (
                 <div className="note-quote">
-                  <strong>Цитата:</strong> {note.quote}
+                  <strong>Цитата:</strong> "{note.quote}"
                 </div>
               )}
               <button 
