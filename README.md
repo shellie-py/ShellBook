@@ -25,7 +25,7 @@
 
 # Клонирование репозитория
 ```bash
-git clone https://github.com/ваш-username/shellbook.git
+git clone https://github.com/shelly-py/shellbook.git
 ```
 # Переход в директорию проекта
 ```bash
