@@ -11,6 +11,7 @@ function App() {
   const [currentSection, setCurrentSection] = useState('library');
   const [notes, setNotes] = useState([]);
   const [bookmarks, setBookmarks] = useState([]);
+  const [customCollections, setCustomCollections] = useState([]);
   const [books, setBooks] = useState([
     {
       id: 1,
@@ -18,7 +19,7 @@ function App() {
       author: "Николай Гоголь",
       year: 1842,
       description: "Одна из самых известных повестей Гоголя о мелком чиновнике Акакии Акакиевиче Башмачкине.",
-      collection: 'read',
+      collection: null,
       text: shinelText,
       canRead: true
     },
@@ -28,7 +29,7 @@ function App() {
       author: "Фёдор Достоевский",
       year: 1866,
       description: "Социально-психологический роман о бывшем студенте Родионе Раскольникове.",
-      collection: 'favorites',
+      collection: null,
       text: prestuplenieText,
       canRead: true
     },
@@ -38,7 +39,7 @@ function App() {
       author: "Антон Чехов",
       year: 1899,
       description: "Рассказ о любовной связи между мужчиной и женщиной, которые оба состоят в браке.",
-      collection: 'planned',
+      collection: null,
       text: damaText,
       canRead: true
     },
@@ -67,7 +68,7 @@ function App() {
       author: "Джордж Оруэлл",
       year: 1949,
       description: "Антиутопический роман о тоталитарном обществе под постоянным контролем Большого Брата.",
-      collection: 'planned',
+      collection: null,
       canRead: false,
       externalLink: "https://boomdown.org/sites/default/files/1984_1948.pdf"    },
     {
@@ -99,6 +100,7 @@ function App() {
     const savedNotes = localStorage.getItem('shellbook-notes');
     const savedBooks = localStorage.getItem('shellbook-books');
     const savedBookmarks = localStorage.getItem('shellbook-bookmarks');
+    const savedCollections = localStorage.getItem('shellbook-custom-collections');
     
     if (savedNotes) {
       setNotes(JSON.parse(savedNotes));
@@ -108,6 +110,9 @@ function App() {
     }
     if (savedBookmarks) {
       setBookmarks(JSON.parse(savedBookmarks));
+    }
+    if (savedCollections) {
+      setCustomCollections(JSON.parse(savedCollections));
     }
   }, []);
 
@@ -123,6 +128,10 @@ function App() {
   useEffect(() => {
     localStorage.setItem('shellbook-bookmarks', JSON.stringify(bookmarks));
   }, [bookmarks]);
+
+  useEffect(() => {
+    localStorage.setItem('shellbook-custom-collections', JSON.stringify(customCollections));
+  }, [customCollections]);
 
   // Загружаем текст книги при выборе
   useEffect(() => {
@@ -196,6 +205,37 @@ function App() {
     }
   };
 
+  // Функции для пользовательских коллекций
+  const createCustomCollection = (collection) => {
+    const collectionWithId = {
+      ...collection,
+      id: Date.now(),
+      createdAt: new Date().toISOString(),
+      books: []
+    };
+    setCustomCollections([...customCollections, collectionWithId]);
+  };
+
+  const deleteCustomCollection = (collectionId) => {
+    setCustomCollections(customCollections.filter(collection => collection.id !== collectionId));
+  };
+
+  const addBookToCustomCollection = (collectionId, bookId) => {
+    setCustomCollections(customCollections.map(collection => 
+      collection.id === collectionId 
+        ? { ...collection, books: [...collection.books, bookId] }
+        : collection
+    ));
+  };
+
+  const removeBookFromCustomCollection = (collectionId, bookId) => {
+    setCustomCollections(customCollections.map(collection => 
+      collection.id === collectionId 
+        ? { ...collection, books: collection.books.filter(id => id !== bookId) }
+        : collection
+    ));
+  };
+
   return (
     <div className="app">
       <header className="app-header">
@@ -245,6 +285,9 @@ function App() {
                 onAddToCollection={addToCollection}
                 onRemoveFromCollection={removeFromCollection}
                 onReadBook={handleReadBook}
+                customCollections={customCollections}
+                onAddBookToCustomCollection={addBookToCustomCollection}
+                onRemoveBookFromCustomCollection={removeBookFromCustomCollection}
               />
             )}
             {currentSection === 'notes' && (
@@ -260,6 +303,11 @@ function App() {
                 onAddToCollection={addToCollection}
                 onRemoveFromCollection={removeFromCollection}
                 onReadBook={handleReadBook}
+                customCollections={customCollections}
+                onCreateCustomCollection={createCustomCollection}
+                onDeleteCustomCollection={deleteCustomCollection}
+                onAddBookToCustomCollection={addBookToCustomCollection}
+                onRemoveBookFromCustomCollection={removeBookFromCustomCollection}
               />
             )}
           </>
@@ -269,7 +317,7 @@ function App() {
   );
 }
 
-// Компонент чтения книги с выделением цитат и закладками
+// Компонент чтения книги (остается без изменений)
 function BookReader({ book, bookText, onBack, onAddNote, onAddBookmark, bookmarks, onDeleteBookmark, onGoToBookmark }) {
   const [noteText, setNoteText] = useState('');
   const [showNoteForm, setShowNoteForm] = useState(false);
@@ -541,13 +589,11 @@ function BookReader({ book, bookText, onBack, onAddNote, onAddBookmark, bookmark
   );
 }
 
-// Остальные компоненты (LibrarySection, NotesSection, CollectionsSection) остаются без изменений
-// ... [вставьте сюда компоненты LibrarySection, NotesSection, CollectionsSection из предыдущей версии] ...
-
-// Компонент библиотеки
-function LibrarySection({ books, onAddNote, onAddToCollection, onRemoveFromCollection, onReadBook }) {
+// Обновленный компонент библиотеки с кнопками для пользовательских коллекций
+function LibrarySection({ books, onAddNote, onAddToCollection, onRemoveFromCollection, onReadBook, customCollections, onAddBookToCustomCollection, onRemoveBookFromCustomCollection }) {
   const [selectedBookForNote, setSelectedBookForNote] = useState(null);
   const [noteText, setNoteText] = useState('');
+  const [showCustomCollections, setShowCustomCollections] = useState(null);
 
   const handleAddNote = (book) => {
     if (noteText.trim()) {
@@ -571,6 +617,11 @@ function LibrarySection({ books, onAddNote, onAddToCollection, onRemoveFromColle
       case 'read': return '✅';
       default: return '📖';
     }
+  };
+
+  const isBookInCustomCollection = (bookId, collectionId) => {
+    const collection = customCollections.find(c => c.id === collectionId);
+    return collection ? collection.books.includes(bookId) : false;
   };
 
   if (selectedBookForNote) {
@@ -641,6 +692,7 @@ function LibrarySection({ books, onAddNote, onAddToCollection, onRemoveFromColle
                 ✏️ Добавить заметку
               </button>
               
+              {/* Основные коллекции */}
               <div style={{display: 'flex', gap: '5px', flexWrap: 'wrap', justifyContent: 'center'}}>
                 <button 
                   onClick={() => onAddToCollection(book.id, 'favorites')}
@@ -701,6 +753,56 @@ function LibrarySection({ books, onAddNote, onAddToCollection, onRemoveFromColle
                   </button>
                 )}
               </div>
+
+              {/* Пользовательские коллекции */}
+              {customCollections.length > 0 && (
+                <div style={{marginTop: '10px'}}>
+                  <button 
+                    onClick={() => setShowCustomCollections(showCustomCollections === book.id ? null : book.id)}
+                    className="custom-collections-toggle"
+                    style={{
+                      width: '100%',
+                      padding: '8px',
+                      background: 'transparent',
+                      border: '1px solid #a8c0d6',
+                      borderRadius: '10px',
+                      color: '#7bb3d1',
+                      cursor: 'pointer',
+                      fontSize: '0.8rem'
+                    }}
+                  >
+                    {showCustomCollections === book.id ? '▲' : '▼'} Мои коллекции
+                  </button>
+                  
+                  {showCustomCollections === book.id && (
+                    <div className="custom-collections-list" style={{marginTop: '8px', display: 'flex', flexDirection: 'column', gap: '5px'}}>
+                      {customCollections.map(collection => (
+                        <button
+                          key={collection.id}
+                          onClick={() => {
+                            if (isBookInCustomCollection(book.id, collection.id)) {
+                              onRemoveBookFromCustomCollection(collection.id, book.id);
+                            } else {
+                              onAddBookToCustomCollection(collection.id, book.id);
+                            }
+                          }}
+                          style={{
+                            padding: '5px 8px',
+                            background: isBookInCustomCollection(book.id, collection.id) ? '#a8c0d6' : 'transparent',
+                            border: '1px solid #a8c0d6',
+                            borderRadius: '8px',
+                            fontSize: '0.7rem',
+                            color: isBookInCustomCollection(book.id, collection.id) ? 'white' : '#7bb3d1',
+                            cursor: 'pointer'
+                          }}
+                        >
+                          {isBookInCustomCollection(book.id, collection.id) ? '✓ ' : ''}{collection.name}
+                        </button>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              )}
             </div>
           </div>
         ))}
@@ -709,7 +811,7 @@ function LibrarySection({ books, onAddNote, onAddToCollection, onRemoveFromColle
   );
 }
 
-// Компонент заметок с улучшенным отображением дат
+// Компонент заметок (без изменений)
 function NotesSection({ notes, onDeleteNote, books }) {
   const [filterBook, setFilterBook] = useState('all');
 
@@ -801,30 +903,71 @@ function NotesSection({ notes, onDeleteNote, books }) {
                 Удалить
               </button>
             </div>
-          )).reverse() // Новые заметки сверху
+          )).reverse()
         )}
       </div>
     </div>
   );
 }
 
-// Компонент коллекций
-function CollectionsSection({ books, onAddToCollection, onRemoveFromCollection, onReadBook }) {
+// Обновленный компонент коллекций с пользовательскими коллекциями
+function CollectionsSection({ books, onAddToCollection, onRemoveFromCollection, onReadBook, customCollections, onCreateCustomCollection, onDeleteCustomCollection, onAddBookToCustomCollection, onRemoveBookFromCustomCollection }) {
   const favorites = books.filter(book => book.collection === 'favorites');
   const planned = books.filter(book => book.collection === 'planned');
   const read = books.filter(book => book.collection === 'read');
+  const [showCreateForm, setShowCreateForm] = useState(false);
+  const [newCollectionName, setNewCollectionName] = useState('');
+  const [newCollectionDescription, setNewCollectionDescription] = useState('');
 
-  const CollectionCard = ({ title, description, books, icon, type }) => (
-    <div className={`collection-card ${type}`}>
+  const handleCreateCollection = () => {
+    if (newCollectionName.trim()) {
+      onCreateCustomCollection({
+        name: newCollectionName,
+        description: newCollectionDescription,
+        color: `hsl(${Math.random() * 360}, 70%, 80%)`
+      });
+      setNewCollectionName('');
+      setNewCollectionDescription('');
+      setShowCreateForm(false);
+      alert('Коллекция создана!');
+    }
+  };
+
+  const CollectionCard = ({ title, description, books, icon, type, onDelete, isCustom = false }) => (
+    <div className={`collection-card ${type}`} style={isCustom ? { background: type } : {}}>
       <h3>{icon} {title}</h3>
       <p>{description}</p>
       <div style={{marginTop: '15px', fontSize: '0.9rem'}}>
         Книг в коллекции: <strong>{books.length}</strong>
       </div>
+      {isCustom && onDelete && (
+        <button 
+          onClick={(e) => {
+            e.stopPropagation();
+            onDelete();
+          }}
+          className="delete-collection-btn"
+          style={{
+            position: 'absolute',
+            top: '10px',
+            right: '10px',
+            background: 'rgba(255,255,255,0.3)',
+            border: 'none',
+            borderRadius: '50%',
+            width: '25px',
+            height: '25px',
+            cursor: 'pointer',
+            color: 'white',
+            fontSize: '0.8rem'
+          }}
+        >
+          ×
+        </button>
+      )}
     </div>
   );
 
-  const BookInCollection = ({ book, onRemove, onRead }) => (
+  const BookInCollection = ({ book, onRemove, onRead, showCustomCollections = false, customCollections = [], onAddToCustom, onRemoveFromCustom }) => (
     <div className="book-card" style={{marginBottom: '10px'}}>
       <div className="book-title">{book.title}</div>
       <div className="book-author">{book.author}, {book.year}</div>
@@ -859,11 +1002,95 @@ function CollectionsSection({ books, onAddToCollection, onRemoveFromCollection, 
     </div>
   );
 
+  const getBooksInCustomCollection = (collection) => {
+    return books.filter(book => collection.books.includes(book.id));
+  };
+
   return (
     <div>
       <h2>Мои коллекции</h2>
       
+      {/* Кнопка создания новой коллекции */}
+      <div style={{marginBottom: '30px'}}>
+        <button 
+          onClick={() => setShowCreateForm(!showCreateForm)}
+          className="create-collection-btn"
+          style={{
+            padding: '15px 25px',
+            background: 'linear-gradient(135deg, #a8d8ea 0%, #7bb3d1 100%)',
+            color: 'white',
+            border: 'none',
+            borderRadius: '25px',
+            cursor: 'pointer',
+            fontSize: '1rem',
+            boxShadow: '0 4px 15px rgba(123, 179, 209, 0.3)'
+          }}
+        >
+          + Создать новую коллекцию
+        </button>
+
+        {showCreateForm && (
+          <div className="create-collection-form" style={{
+            background: 'linear-gradient(135deg, #f8f7fc 0%, #e8e6f2 100%)',
+            padding: '20px',
+            borderRadius: '15px',
+            marginTop: '15px',
+            border: '1px solid #e8e6f2'
+          }}>
+            <h4>Создать новую коллекцию</h4>
+            <input
+              type="text"
+              value={newCollectionName}
+              onChange={(e) => setNewCollectionName(e.target.value)}
+              placeholder="Название коллекции"
+              className="collection-name-input"
+              style={{
+                width: '100%',
+                padding: '12px 15px',
+                border: '1px solid #a8c0d6',
+                borderRadius: '10px',
+                fontSize: '1rem',
+                marginBottom: '10px'
+              }}
+            />
+            <textarea
+              value={newCollectionDescription}
+              onChange={(e) => setNewCollectionDescription(e.target.value)}
+              placeholder="Описание коллекции"
+              className="collection-description-input"
+              style={{
+                width: '100%',
+                padding: '12px 15px',
+                border: '1px solid #a8c0d6',
+                borderRadius: '10px',
+                fontSize: '1rem',
+                marginBottom: '15px',
+                resize: 'vertical',
+                minHeight: '60px'
+              }}
+            />
+            <button 
+              onClick={handleCreateCollection}
+              className="save-collection-btn"
+              disabled={!newCollectionName.trim()}
+              style={{
+                padding: '12px 25px',
+                background: newCollectionName.trim() ? 'linear-gradient(135deg, #a8d8b9 0%, #7bc1a3 100%)' : '#d1d1e0',
+                color: 'white',
+                border: 'none',
+                borderRadius: '25px',
+                cursor: newCollectionName.trim() ? 'pointer' : 'not-allowed',
+                fontSize: '1rem'
+              }}
+            >
+              Создать коллекцию
+            </button>
+          </div>
+        )}
+      </div>
+      
       <div className="collections-grid">
+        {/* Стандартные коллекции */}
         <CollectionCard 
           title="Избранное" 
           description="Самые понравившиеся книги"
@@ -885,12 +1112,28 @@ function CollectionsSection({ books, onAddToCollection, onRemoveFromCollection, 
           icon="✅"
           type="read"
         />
+
+        {/* Пользовательские коллекции */}
+        {customCollections.map(collection => (
+          <CollectionCard 
+            key={collection.id}
+            title={collection.name} 
+            description={collection.description}
+            books={getBooksInCustomCollection(collection)}
+            icon="📂"
+            type={collection.color}
+            onDelete={() => onDeleteCustomCollection(collection.id)}
+            isCustom={true}
+          />
+        ))}
       </div>
 
+      {/* Детали коллекций */}
       <div style={{marginTop: '40px'}}>
         <h3>Книги в коллекциях</h3>
         
         <div style={{display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))', gap: '30px', marginTop: '20px'}}>
+          {/* Стандартные коллекции */}
           <div>
             <h4 style={{color: '#ffb37b', marginBottom: '15px'}}>⭐ Избранное ({favorites.length})</h4>
             {favorites.length === 0 ? (
@@ -938,6 +1181,45 @@ function CollectionsSection({ books, onAddToCollection, onRemoveFromCollection, 
               ))
             )}
           </div>
+
+          {/* Пользовательские коллекции */}
+          {customCollections.map(collection => {
+            const collectionBooks = getBooksInCustomCollection(collection);
+            return (
+              <div key={collection.id}>
+                <h4 style={{color: '#7bb3d1', marginBottom: '15px', display: 'flex', justifyContent: 'space-between', alignItems: 'center'}}>
+                  <span>📂 {collection.name} ({collectionBooks.length})</span>
+                  <button 
+                    onClick={() => onDeleteCustomCollection(collection.id)}
+                    className="delete-collection-small-btn"
+                    style={{
+                      background: 'transparent',
+                      border: '1px solid #e74c3c',
+                      borderRadius: '15px',
+                      color: '#e74c3c',
+                      cursor: 'pointer',
+                      fontSize: '0.7rem',
+                      padding: '2px 8px'
+                    }}
+                  >
+                    Удалить
+                  </button>
+                </h4>
+                {collectionBooks.length === 0 ? (
+                  <p style={{color: '#9e9bb6', fontStyle: 'italic'}}>Пока нет книг в этой коллекции</p>
+                ) : (
+                  collectionBooks.map(book => (
+                    <BookInCollection 
+                      key={book.id} 
+                      book={book} 
+                      onRemove={(bookId) => onRemoveBookFromCustomCollection(collection.id, bookId)}
+                      onRead={onReadBook}
+                    />
+                  ))
+                )}
+              </div>
+            );
+          })}
         </div>
       </div>
     </div>

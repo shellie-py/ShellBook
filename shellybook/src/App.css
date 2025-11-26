@@ -599,3 +599,85 @@ body {
 .book-text span::-moz-selection {
   background: #b4e4ff;
 }
+
+/* Стили для пользовательских коллекций */
+
+.create-collection-btn {
+  transition: all 0.3s ease;
+}
+
+.create-collection-btn:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 20px rgba(123, 179, 209, 0.4);
+}
+
+.collection-name-input:focus,
+.collection-description-input:focus {
+  outline: none;
+  border-color: #7bb3d1 !important;
+  box-shadow: 0 0 0 2px rgba(123, 179, 209, 0.2);
+}
+
+.save-collection-btn:not(:disabled):hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 15px rgba(123, 193, 163, 0.3);
+}
+
+/* Стили для переключателя пользовательских коллекций */
+.custom-collections-toggle {
+  transition: all 0.3s ease;
+}
+
+.custom-collections-toggle:hover {
+  background: rgba(168, 192, 214, 0.1) !important;
+}
+
+.custom-collections-list {
+  animation: slideDown 0.3s ease;
+}
+
+@keyframes slideDown {
+  from {
+    opacity: 0;
+    transform: translateY(-10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* Улучшенные стили для карточек коллекций */
+.collection-card {
+  position: relative;
+  transition: all 0.4s ease;
+}
+
+.collection-card:hover {
+  transform: translateY(-8px) scale(1.02);
+}
+
+.delete-collection-btn:hover {
+  background: rgba(231, 76, 60, 0.8) !important;
+  transform: scale(1.1);
+}
+
+.delete-collection-small-btn:hover {
+  background: #e74c3c !important;
+  color: white !important;
+}
+
+/* Адаптивность для пользовательских коллекций */
+@media (max-width: 768px) {
+  .collections-grid {
+    grid-template-columns: 1fr;
+  }
+  
+  .custom-collections-list {
+    font-size: 0.7rem;
+  }
+  
+  .create-collection-form {
+    padding: 15px !important;
+  }
+}
