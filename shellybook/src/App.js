@@ -59,7 +59,7 @@ function App() {
       description: "Роман о красивом молодом человеке, который желает, чтобы его портрет старел вместо него.",
       collection: null,
       canRead: false,
-      externalLink: "https://www.culture.ru/read/portret-doriana-greya"
+      externalLink: "https://www.100bestbooks.ru/files/Wild_Portret_Doriana_Greya.pdf"
     },
     {
       id: 6,
@@ -69,7 +69,7 @@ function App() {
       description: "Антиутопический роман о тоталитарном обществе под постоянным контролем Большого Брата.",
       collection: 'planned',
       canRead: false,
-      externalLink: "https://www.litres.ru/book/dzhordzh-oruell/1984-535330/"
+      externalLink: "https://boomdown.org/sites/default/files/1984_1948.pdf"
     },
     {
       id: 7,
@@ -79,7 +79,7 @@ function App() {
       description: "Роман о подростке-преступнике в антиутопическом будущем Великобритании.",
       collection: null,
       canRead: false,
-      externalLink: "https://www.litres.ru/book/entoni-berdzhess/mehanicheskiy-apelsin-114199/"
+      externalLink: "https://lib.ru/INPROZ/BERDZHES/apelsin.txt_with-big-pictures.html"
     },
     {
       id: 8,
