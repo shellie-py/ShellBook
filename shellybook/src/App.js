@@ -42,7 +42,45 @@ function App() {
 
 // Базовые компоненты секций (пока заглушки)
 function LibrarySection() {
-  return <div>Библиотека - здесь будут книги</div>;
+  const books = [
+    {
+      id: 1,
+      title: "Евгений Онегин",
+      author: "А. С. Пушкин",
+      year: 1831,
+      description: "Роман в стихах Александра Сергеевича Пушкина, одно из самых значительных произведений русской литературы."
+    },
+    {
+      id: 2,
+      title: "Преступление и наказание",
+      author: "Ф. М. Достоевский",
+      year: 1866,
+      description: "Социально-психологический и социально-философский роман Фёдора Михайловича Достоевского."
+    },
+    {
+      id: 3,
+      title: "Война и мир",
+      author: "Л. Н. Толстой",
+      year: 1869,
+      description: "Роман-эпопея Льва Николаевича Толстого, описывающий русское общество в эпоху войн против Наполеона."
+    }
+  ];
+
+  return (
+    <div>
+      <h2>Библиотека</h2>
+      <div className="books-grid">
+        {books.map(book => (
+          <div key={book.id} className="book-card">
+            <div className="book-title">{book.title}</div>
+            <div className="book-author">{book.author}, {book.year}</div>
+            <div className="book-description">{book.description}</div>
+            <button className="add-note-btn">Добавить заметку</button>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
 }
 
 function NotesSection() {
